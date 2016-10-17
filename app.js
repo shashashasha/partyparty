@@ -48,9 +48,10 @@ app.get('/', function (req, res) {
         }
 
         console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
-        console.log('Sheet 1: '+ sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
 
         sheet = info.worksheets[0];
+
+        console.log('Sheet 1: ' + sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
         step();
       });
     },
