@@ -16,11 +16,64 @@
 'use strict';
 
 var express = require('express');
+var SETTINGS = require('./settings.json');
+var GoogleSpreadsheet = require('google-spreadsheet');
+var async = require('async');
 
 var app = express();
 
 app.get('/', function (req, res) {
-  res.status(200).send('Mr. and Mrs. Hwang are having a party!');
+
+  // spreadsheet key is the long id in the sheets URL
+  var doc = new GoogleSpreadsheet(SETTINGS.SHEET);
+  var sheet;
+
+  async.series([
+    function setAuth(step) {
+      // see notes below for authentication instructions!
+      var creds = require('./google-generated-creds.json');
+
+      // OR, if you cannot save the file locally (like on heroku)
+      var creds_json = {
+        client_email: creds.client_email,
+        private_key: creds.private_key
+      }
+
+      doc.useServiceAccountAuth(creds, step);
+    },
+    function getInfoAndWorksheets(step) {
+      doc.getInfo(function(err, info) {
+        if (err) {
+          res.status(200).send(err);
+        }
+
+        console.log('Loaded doc: ' + info.title + ' by ' + info.author.email);
+        console.log('Sheet 1: '+ sheet.title + ' ' + sheet.rowCount + 'x' + sheet.colCount);
+
+        sheet = info.worksheets[0];
+        step();
+      });
+    },
+    function workingWithCells(step) {
+      sheet.getCells({
+        'min-row': 3,
+        'max-row': 101,
+        'min-col': 3,
+        'max-col': 3,
+        'return-empty': true
+      }, function(err, cells) {
+        var list = "";
+
+        cells.forEach(function(cell, i) {
+          list += cell.value + ', ';
+        });
+
+        res.status(200).send(list);
+
+        step();
+      });
+    }
+  ]);
 });
 
 // Start the server
