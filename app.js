@@ -8,13 +8,20 @@
 // [START app]
 'use strict';
 
-var express = require('express');
-var SETTINGS = require('./settings.json');
-var creds = require('./google-generated-creds.json');
-var GoogleSpreadsheet = require('google-spreadsheet');
-var async = require('async');
+var express = require('express')
+  , engine = require('ejs-locals')
+  , SETTINGS = require('./settings.json')
+  , creds = require('./google-generated-creds.json')
+  , GoogleSpreadsheet = require('google-spreadsheet')
+  , async = require('async');
 
 var app = express();
+
+// use ejs-locals for all ejs templates:
+app.engine('ejs', engine);
+
+app.set('view engine', 'ejs');
+app.use(express.static('public'));
 
 // Index path just shows everyone
 app.get('/', function (req, res) {
@@ -26,7 +33,11 @@ app.get('/', function (req, res) {
     async.apply(showPeopleTable),
     function (msg, callback) {
       // Output list of people
-      res.status(200).send(msg);
+      // res.status(200).send(msg);
+
+      res.render('index', {
+        people_table: msg
+      });
     }
   ]);
 });
